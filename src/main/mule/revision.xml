@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="fd57688a-b7b9-4507-b1e9-52ac2ea92e2f" >
+		<db:my-sql-connection host="localhost" port="3306" user="root" password="Maganu@2017" database="product" />
+	</db:config>
+	<file:config name="File_Config" doc:name="File Config" doc:id="7e5bc8ef-c239-4621-99a6-e10dabbfb9e1" >
+		<file:connection workingDir="C:\Users\lenovo\Desktop\New folder" />
+	</file:config>
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="a37b4c31-df78-40d7-aaec-3550d6cb6931" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<flow name="revisionFlow" doc:id="95a962b4-e987-4fa1-a1dd-07dfaa6e6b37" >
+		<http:listener doc:name="Listener" doc:id="69301926-40c9-4cc3-a1c9-a0575a8733b2" config-ref="HTTP_Listener_config" path="/revise"/>
+		<db:select doc:name="Select" doc:id="e834c53c-137a-4c2d-8e02-00dcc460bf08" config-ref="Database_Config">
+			<db:sql >select * from person;</db:sql>
+		</db:select>
+		<foreach doc:name="For Each" doc:id="46796247-ba4c-46f1-b172-372a130c6ae7" collection="#[payload]" batchSize="2">
+			<ee:transform doc:name="Transform Message" doc:id="4f2130ef-dd01-4434-8f00-a9f75760be85" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<logger level="INFO" doc:name="Logger" doc:id="97b0c2ea-09f9-45e3-8c6d-c1ae2aacaaf9" message="#[payload]"/>
+		</foreach>
+		<ee:transform doc:name="Transform Message" doc:id="c50c080c-e9fd-4725-9adf-3f2d395e4085">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+//var department = attributes.queryParams.department
+---
+payload	
+//[3,4,5,6,7] filter (value, index) ->(value >=5)
+//[1,2,3,3,1,2,3,4,5] distinctBy (value) -> {"unique": value}	
+//['mase', 'fre', 'habte'] map ("$$" : $)
+//{"a":"b", "c":"d"} mapObject (values,key,index) -> { (index): { (values) : key} }
+//formattedDate: now() as String {format: "y-MM-dd:hh-m-s"}
+//now() as String {format: "y-MM-dd"}	
+//now() as String {format: "hh-m-s"}
+//{ "trim": trim("   my really long  text     ") }
+//trim("   my really long  text     ")]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
